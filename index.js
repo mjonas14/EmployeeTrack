@@ -11,21 +11,25 @@ const db = mysql.createConnection(
     password: process.env.DB_PASSWORD,
     database: dbName,
   },
-  console.log(`Connected to database: ${process.env.DB_NAME}`)
+  console.log(`Connected to database: ${dbName}`)
 );
 
-let departmentList;
-const questions = ["What would you like to do?"];
-function getDepartments() {
-    let temp3 = [];
-    db.query("SELECT department_name FROM departments", (err, results) => {
-    // console.log('first', results);
-    departmentList = results;
-    temp3 = departmentList.flatMap(Object.values);
-    // console.log('second', temp);
-  });
-  console.log(temp3);
-  return temp3;
+async function getDepartments() {
+  try {
+    const departmentList = await new Promise((resolve, reject) => {
+      db.query("SELECT department_name FROM departments", (err, results) => {
+        if (err) reject(err);
+        else {
+          const flatList = results.flatMap(Object.values);
+          resolve(flatList);
+        }
+      });
+    });
+    console.log(departmentList.length);
+    return departmentList;
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 function init() {
@@ -33,7 +37,7 @@ function init() {
     .prompt([
       {
         name: "todo",
-        message: questions[0],
+        message: "What would you like to do?",
         type: "list",
         choices: [
           "View All Employees",
@@ -47,14 +51,13 @@ function init() {
       },
     ])
     .then((answers) => {
-
       if (answers.todo === "View All Employees") {
         db.query("SELECT * FROM employees", (err, results) => {
           console.table(results);
           init();
         });
       } 
-
+      
       else if (answers.todo === "Add Employee") {
         inquirer
           .prompt([
@@ -75,11 +78,11 @@ function init() {
               choices: ["Example 1", "Example 2", "Example 3"],
             },
             {
-                name: "employeeManager",
-                message: "Who is the employee's manager?",
-                type: "list",
-                choices: ["Example 1", "Example 2", "Example 3"],
-            }
+              name: "employeeManager",
+              message: "Who is the employee's manager?",
+              type: "list",
+              choices: ["Example 1", "Example 2", "Example 3"],
+            },
           ])
           .then((answers) => {
             db.query(
@@ -87,13 +90,15 @@ function init() {
             );
 
             // Log to the console that the employee was successfully added to the database
-            console.log(`Added ${answers.employeeFirstName} ${answers.employeeLastName} to the database`);
+            console.log(
+              `Added ${answers.employeeFirstName} ${answers.employeeLastName} to the database`
+            );
             init();
             // const temp2 = getDepartments();
             // console.log('Got departments!', temp2);
           });
-      }
-
+      } 
+      
       else if (answers.todo === "Update Employee Role") {
         inquirer
           .prompt([
@@ -105,10 +110,11 @@ function init() {
             },
             {
               name: "employeeLastName",
-              message: "Which role do you want to assign the selected employee?",
+              message:
+                "Which role do you want to assign the selected employee?",
               type: "list",
               choices: ["Example 1", "Example 2", "Example 3"],
-            }
+            },
           ])
           .then((answers) => {
             db.query(
@@ -119,17 +125,23 @@ function init() {
             console.log(`Updated employee's role`);
             init();
           });
-      }
+      } 
       
       else if (answers.todo === "View All Roles") {
         db.query("SELECT * FROM roles", (err, results) => {
-          console.log(results);
+          console.table(results);
           init();
         });
       } 
       
       else if (answers.todo === "Add Role") {
-        // getDepartments();
+
+        let departmentArray = [];
+        const departments = getDepartments().then((answer) => {
+          departmentArray = answer;
+          return answer;
+        });
+
         inquirer
           .prompt([
             {
@@ -146,22 +158,21 @@ function init() {
               name: "roleDepartment",
               message: "Which department does the role belong to?",
               type: "list",
-              choices: getDepartments(),
+              choices: departmentArray,
             },
           ])
           .then((answers) => {
             db.query(
-              `INSERT INTO roles (title,salary,department_id) VALUES ('${answers.roleName}',${answers.roleSalary},${answers.roleDepartment});`
+              `INSERT INTO roles (title,salary,department_id) VALUES ('${answers.roleName}','${answers.roleSalary}','${answers.roleDepartment}');`
             );
+            console.log("Success!");
             init();
-            // const temp2 = getDepartments();
-            // console.log('Got departments!', temp2);
           });
       } 
-
+      
       else if (answers.todo === "View All Departments") {
         db.query("SELECT * FROM departments", (err, results) => {
-          console.log(results);
+          console.table(results);
           init();
         });
       } 
@@ -179,6 +190,7 @@ function init() {
             db.query(
               `INSERT INTO departments (department_name) VALUES ('${answers.departmentName}');`
             );
+            console.log("Successfully added a new department");
             init();
           });
       }
