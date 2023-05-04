@@ -8,5 +8,5 @@ VALUES ('John','Doe',1,1),
        
 INSERT INTO roles (title,salary,department_id)
 VALUES ('CEO',10,2),
-       ('MD',20,2);
+       ('MD',20,3);
 
