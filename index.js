@@ -18,7 +18,7 @@ async function getDepartments() {
   try {
     const departmentList = await new Promise((resolve, reject) => {
       db.query("SELECT department_name FROM departments", (err, results) => {
-        if (err) reject(err);
+        if (err) console.log(err);
         else {
           const flatList = results.flatMap(Object.values);
           resolve(flatList);
@@ -31,6 +31,39 @@ async function getDepartments() {
     console.error(err);
   }
 }
+
+
+function getDepartments2() {
+  db.query("SELECT * FROM departments", (err, results) => {
+    if (err) console.log(err)
+    else {
+      console.table(results);
+      init();
+    };
+  });
+};
+
+function getEmployees() {
+  db.query("SELECT * FROM employees", (err, results) => {
+    if (err) console.log(err)
+    else {
+      console.table(results);
+      init();
+    };
+  });
+};
+
+function getRoles() {
+  db.query("SELECT * FROM roles", (err, results) => {
+    if (err) console.log(err)
+    else {
+      console.table(results);
+      init();
+    };
+  });
+};
+
+
 
 function init() {
   inquirer
@@ -51,12 +84,7 @@ function init() {
       },
     ])
     .then((answers) => {
-      if (answers.todo === "View All Employees") {
-        db.query("SELECT * FROM employees", (err, results) => {
-          console.table(results);
-          init();
-        });
-      } 
+      if (answers.todo === "View All Employees") getEmployees();
       
       else if (answers.todo === "Add Employee") {
         inquirer
@@ -127,12 +155,7 @@ function init() {
           });
       } 
       
-      else if (answers.todo === "View All Roles") {
-        db.query("SELECT * FROM roles", (err, results) => {
-          console.table(results);
-          init();
-        });
-      } 
+      else if (answers.todo === "View All Roles") getRoles();
       
       else if (answers.todo === "Add Role") {
 
@@ -170,12 +193,7 @@ function init() {
           });
       } 
       
-      else if (answers.todo === "View All Departments") {
-        db.query("SELECT * FROM departments", (err, results) => {
-          console.table(results);
-          init();
-        });
-      } 
+      else if (answers.todo === "View All Departments") getDepartments2();
       
       else if (answers.todo === "Add Department") {
         inquirer
